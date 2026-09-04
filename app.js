@@ -482,5 +482,4 @@ async function exportHistory() {
 /* ================= Wire up ================= */
 document.querySelectorAll('.nav-item').forEach(n => n.onclick = () => setView(n.dataset.view));
 document.getElementById('modalWrap').addEventListener('click', e => { if (e.target.id === 'modalWrap') closeModal(); });
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 boot();
