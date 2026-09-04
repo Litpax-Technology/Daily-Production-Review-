@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#635bff" />
+  <link rel="manifest" href="manifest.json" />
+  <title>Daily Production Review</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand-side">Production<span>Review</span></div>
+      <nav id="nav">
+        <a class="nav-item active" data-view="review">Daily Review</a>
+        <a class="nav-item" data-view="dashboard">Dashboard</a>
+        <a class="nav-item" data-view="settings">Settings</a>
+      </nav>
+      <div class="side-foot muted">Litpax Technology</div>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <h2 id="pageTitle" class="page-title">Daily Review</h2>
+        <span id="who" class="muted"></span>
+      </header>
+      <section id="page" class="page fade-in">
+        <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Model breakdown modal -->
+  <div id="modalWrap" class="modal-wrap hidden">
+    <div class="modal" id="modalBox"></div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
