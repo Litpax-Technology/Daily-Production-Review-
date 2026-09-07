@@ -11,7 +11,9 @@ const state = {
   grid: {},          // LineName -> { YesterdayAchieved, Shifts, PlanYesterday, PlanToday, Backlog, Remarks }
   modelsByLine: {},  // LineName -> [ { Model, PlannedQty } ]
   hist: { page: 1, q: '' },
-  chart: null
+  chart: null,
+  chart2: null,
+  dash: { mode: 'today', from: '', to: '' }
 };
 const NUM = ['YesterdayAchieved', 'Shifts', 'PlanYesterday', 'PlanToday'];
 
@@ -35,8 +37,14 @@ function api(action, params = {}) {
 function todayStr() {
   const d = new Date();
   return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+}function pad(n) { return (n < 10 ? '0' : '') + n; }
+function monthStartStr(s) { return s.slice(0, 8) + '01'; }
+function weekStartStr(s) {
+  const d = new Date(s + 'T00:00:00');
+  let diff = d.getDay() - 1; if (diff < 0) diff += 7;
+  d.setDate(d.getDate() - diff);
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 }
-function pad(n) { return (n < 10 ? '0' : '') + n; }
 function esc(v) { return (v == null ? '' : String(v)).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 function num(v) { return Number(v) || 0; }
 function toast(msg, ok = true) {
@@ -276,22 +284,63 @@ async function saveDay() {
 /* ================= View: Dashboard ================= */
 async function renderDashboard() {
   const page = document.getElementById('page');
+  const d = state.dash;
+  if (!d.from) d.from = monthStartStr(state.date);
+  if (!d.to)   d.to   = state.date;
+  const modes = { today: 'Today', week: 'This Week', month: 'This Month', custom: 'Custom' };
   page.innerHTML = `
     <div class="bar">
-      <label class="field"><span>Date</span>
+      <div class="seg" id="dashSeg">
+        ${Object.keys(modes).map(m =>
+          `<button class="seg-btn ${d.mode===m?'active':''}" data-m="${m}">${modes[m]}</button>`).join('')}
+      </div>
+      <label class="field ${d.mode==='today'?'hidden':''}" id="fromWrap"><span>From</span>
+        <input id="fromDate" class="input" type="date" value="${d.from}" max="${todayStr()}"
+          ${d.mode==='custom'?'':'disabled'}></label>
+      <label class="field ${d.mode==='today'?'hidden':''}" id="toWrap"><span>To</span>
+        <input id="toDate" class="input" type="date" value="${d.to}" max="${todayStr()}"
+          ${d.mode==='custom'?'':'disabled'}></label>
+      <label class="field ${d.mode==='today'?'':'hidden'}" id="dayWrap"><span>Date</span>
         <input id="dashDate" class="input" type="date" value="${state.date}" max="${todayStr()}"></label>
       <div class="spacer"></div>
       <button id="expBtn" class="btn btn-ghost" style="width:auto">Export CSV</button>
     </div>
     <div id="dashBody"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>`;
-  document.getElementById('dashDate').onchange = e => { state.date = e.target.value; renderDashboard(); };
+
+  document.getElementById('dashSeg').querySelectorAll('.seg-btn').forEach(b =>
+    b.onclick = () => { setDashMode(b.dataset.m); });
+  const dd = document.getElementById('dashDate');
+  if (dd) dd.onchange = e => { state.date = e.target.value; loadDash(); };
+  const fd = document.getElementById('fromDate'), td = document.getElementById('toDate');
+  if (fd) fd.onchange = e => { state.dash.from = e.target.value; loadDash(); };
+  if (td) td.onchange = e => { state.dash.to = e.target.value; loadDash(); };
   document.getElementById('expBtn').onclick = exportHistory;
 
+  loadDash();
+}
+
+/* mode -> compute from/to, then reload */
+function setDashMode(m) {
+  const d = state.dash; d.mode = m;
+  if (m === 'week')  { d.from = weekStartStr(state.date); d.to = state.date; }
+  if (m === 'month') { d.from = monthStartStr(state.date); d.to = state.date; }
+  renderDashboard();
+}
+
+async function loadDash() {
+  const body = document.getElementById('dashBody');
+  body.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
   try {
-    const r = await api('dashboard', { date: state.date });
-    if (!r.ok) return toast(r.message || 'Load failed', false);
-    drawDashboard(r);
-  } catch (e) { document.getElementById('dashBody').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+    if (state.dash.mode === 'today') {
+      const r = await api('dashboard', { date: state.date });
+      if (!r.ok) return toast(r.message || 'Load failed', false);
+      drawDashboard(r);
+    } else {
+      const r = await api('dashboardRange', { from: state.dash.from, to: state.dash.to });
+      if (!r.ok) return toast(r.message || 'Load failed', false);
+      drawRangeDashboard(r);
+    }
+  } catch (e) { body.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
 
 function drawDashboard(r) {
@@ -329,6 +378,89 @@ function drawDashboard(r) {
     <div class="cards">${cards || `<div class="empty">No lines configured.</div>`}</div>`;
 
   drawChart(r, byLine);
+}
+
+/* ================= Range Dashboard (week / month / custom) ================= */
+function drawRangeDashboard(r) {
+  let tA = 0, tP = 0;
+  const cards = (r.summary || []).map(s => {
+    tA += s.achieved; tP += s.plan;
+    const pct = s.plan ? Math.round(s.achieved / s.plan * 100) : 0;
+    const vcls = s.variance > 0 ? 'up' : s.variance < 0 ? 'down' : '';
+    return `<div class="card fade-in">
+      <div class="card-top"><span class="cname">${esc(s.LineName)}</span>
+        <span class="badge">${s.days} day${s.days===1?'':'s'}</span></div>
+      <div class="card-nums">
+        <div><b>${s.achieved}</b><span>Achieved</span></div>
+        <div><b>${s.plan || '—'}</b><span>Plan</span></div>
+        <div class="${vcls}"><b>${s.plan ? (s.variance>0?'+':'')+s.variance : '—'}</b><span>Variance</span></div>
+      </div>
+      <div class="prog"><div class="prog-bar" style="width:${Math.min(100,pct)}%"></div></div>
+      <div class="prog-lbl muted">Achievement: ${pct}%</div>
+    </div>`;
+  }).join('');
+
+  const tVar = tA - tP, tPct = tP ? Math.round(tA / tP * 100) : 0;
+  document.getElementById('dashBody').innerHTML = `
+    <div class="kpis">
+      <div class="kpi"><b>${tP}</b><span>Total plan</span></div>
+      <div class="kpi"><b>${tA}</b><span>Total achieved</span></div>
+      <div class="kpi ${tVar>0?'up':tVar<0?'down':''}"><b>${tP?(tVar>0?'+':'')+tVar:'—'}</b><span>Total variance</span></div>
+      <div class="kpi"><b>${tPct}%</b><span>Achievement</span></div>
+    </div>
+    <div class="range-lbl muted">${esc(r.from)} → ${esc(r.to)}</div>
+    <div class="chart-card"><canvas id="chartTrend" height="110"></canvas></div>
+    <div class="chart-card"><canvas id="chart" height="110"></canvas></div>
+    <div class="cards">${cards || `<div class="empty">No data in this range.</div>`}</div>`;
+
+  drawTrendChart(r);
+  drawRangeBar(r);
+}
+
+function drawTrendChart(r) {
+  const ctx = document.getElementById('chartTrend');
+  if (!ctx || !window.Chart) return;
+  if (state.chart2) state.chart2.destroy();
+  const t = r.trend || [];
+  state.chart2 = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: t.map(x => x.date.slice(5)),
+      datasets: [
+        { label: 'Plan', data: t.map(x => x.plan), borderColor: '#c7c4ff',
+          backgroundColor: 'transparent', tension: .3, borderWidth: 2, pointRadius: 2 },
+        { label: 'Achieved', data: t.map(x => x.achieved), borderColor: '#635bff',
+          backgroundColor: 'rgba(99,91,255,.08)', fill: true, tension: .3, borderWidth: 2, pointRadius: 2 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { boxWidth: 12 } } },
+      scales: { y: { beginAtZero: true, grid: { color: '#eef0f6' } }, x: { grid: { display: false } } }
+    }
+  });
+}
+
+function drawRangeBar(r) {
+  const ctx = document.getElementById('chart');
+  if (!ctx || !window.Chart) return;
+  if (state.chart) state.chart.destroy();
+  const s = r.summary || [];
+  state.chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: s.map(x => x.LineName),
+      datasets: [
+        { label: 'Plan', data: s.map(x => x.plan), backgroundColor: '#c7c4ff', borderRadius: 6 },
+        { label: 'Achieved', data: s.map(x => x.achieved), backgroundColor: '#635bff', borderRadius: 6 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { boxWidth: 12 } } },
+      scales: { y: { beginAtZero: true, grid: { color: '#eef0f6' } }, x: { grid: { display: false } } }
+    }
+  });
 }
 
 function drawChart(r, byLine) {
