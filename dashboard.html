@@ -169,6 +169,19 @@ main { padding-top: 20px; padding-bottom: 40px; }
   .chart-box { height: 220px; }
 }
 
+    .kpi { display: flex; flex-direction: column; }
+.kpi .k-v { font-size: 26px; }
+.k-cmp {
+  margin-top: auto; padding-top: 9px; border-top: 1px dashed var(--line);
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+}
+.kpi .k-v + .k-cmp { margin-top: 10px; }
+.kpill { font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 99px; white-space: nowrap; }
+.kpill.up   { background: #e7f6ee; color: var(--up); }
+.kpill.down { background: #fdecee; color: var(--down); }
+.kpill.flat { background: var(--bg); color: var(--muted); }
+.k-prev { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
 </style>
 </head>
 <body>
@@ -502,18 +515,22 @@ function renderChips() {
 
 /* ---- delta helpers ---- */
 function chg(c, p) { return p ? (c - p) / Math.abs(p) * 100 : null; }
+function kCmp(d, txt, prev) {
+  const cls = d > 0.05 ? 'up' : d < -0.05 ? 'down' : 'flat';
+  const ar = cls === 'up' ? '▲ ' : cls === 'down' ? '▼ ' : '';
+  return `<div class="k-cmp"><span class="kpill ${cls}">${ar}${txt}</span><span class="k-prev">Previous ${prev}</span></div>`;
+}
 function dRel(c, p) {
-  if (!S.data.cmp) return '<span class="muted">No comparison</span>';
+  if (!S.data.cmp) return '';
   const d = chg(c, p);
-  if (d == null) return '<span class="muted">No data to compare</span>';
-  const cls = d > 0.05 ? 'up' : d < -0.05 ? 'down' : 'muted';
-  return `<span class="${cls}">${d > 0 ? '▲' : d < 0 ? '▼' : ''} ${Math.abs(d).toFixed(1)}%</span> <span class="muted">vs ${fmt(Math.round(p))}</span>`;
+  if (d == null) return '<div class="k-cmp"><span class="k-prev">No earlier data</span></div>';
+  return kCmp(d, Math.abs(d).toFixed(1) + '%', fmt(Math.round(p)));
 }
 function dPts(c, p) {
-  if (!S.data.cmp) return '<span class="muted">No comparison</span>';
-  if (c == null || p == null) return '<span class="muted">No data to compare</span>';
-  const d = c - p, cls = d > 0.05 ? 'up' : d < -0.05 ? 'down' : 'muted';
-  return `<span class="${cls}">${d > 0 ? '▲' : d < 0 ? '▼' : ''} ${Math.abs(d).toFixed(1)} pts</span> <span class="muted">vs ${fp(p)}</span>`;
+  if (!S.data.cmp) return '';
+  if (c == null || p == null) return '<div class="k-cmp"><span class="k-prev">No earlier data</span></div>';
+  const d = c - p;
+  return kCmp(d, Math.abs(d).toFixed(1) + ' pts', fp(p));
 }
 
 /* ---- hero ---- */
@@ -547,14 +564,15 @@ function renderHero(cur, cmp) {
 /* ---- KPIs ---- */
 function renderKpis(cur, cmp) {
   const T = cur.T, P = cmp ? cmp.T : {};
-  const k = (l, v, d) => `<div class="kpi"><div class="k-l">${l}</div><div class="k-v">${v}</div><div class="k-d">${d}</div></div>`;
-  const vr = T.a - T.p;
+  const k = (l, v, d) => `<div class="kpi"><div class="k-l">${l}</div><div class="k-v">${v}</div>${d}</div>`;
+  const sg = n => (n > 0 ? '+' : '') + fmt(n);
+  const vr = T.a - T.p, pvr = cmp ? P.a - P.p : null;
+  const vCmp = cmp ? kCmp(vr - pvr, fmt(Math.abs(vr - pvr)) + ' units', sg(pvr)) : '';
   document.getElementById('kpis').innerHTML =
     k('Achieved', fmt(T.a), dRel(T.a, P.a)) +
     k('Planned', fmt(T.p), dRel(T.p, P.p)) +
     k('Achievement', fp(pct(T.a, T.p)), dPts(pct(T.a, T.p), cmp ? pct(P.a, P.p) : null)) +
-    k('Variance', `<span class="${vr > 0 ? 'up' : vr < 0 ? 'down' : ''}">${vr > 0 ? '+' : ''}${fmt(vr)}</span>`,
-      cmp ? `<span class="muted">Comparison: ${P.a - P.p > 0 ? '+' : ''}${fmt(P.a - P.p)}</span>` : '<span class="muted">No comparison</span>') +
+    k('Variance', `<span class="${vr > 0 ? 'up' : vr < 0 ? 'down' : ''}">${sg(vr)}</span>`, vCmp) +
     k('Average per day', fmt(Math.round(T.avg)), dRel(T.avg, P.avg)) +
     k('Target achievement', fp(pct(T.a, T.tgt)), dPts(pct(T.a, T.tgt), cmp ? pct(P.a, P.tgt) : null));
 }
