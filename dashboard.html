@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Production Report — Litpax</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+:root {
+  --ink: #1f2240;
+  --muted: #6b6f8e;
+  --line: #e6e7f0;
+  --bg: #f7f7fb;
+  --card: #ffffff;
+  --accent: #635bff;
+  --accent-soft: #eeedff;
+  --indigo: #1e1b4b;
+  --up: #1f8a5b;
+  --down: #d23f4a;
+  --r: 10px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--ink); background: var(--bg); font-size: 14px; line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+.wrap { max-width: 1240px; margin: 0 auto; padding: 0 20px; }
+.hidden { display: none !important; }
+.muted { color: var(--muted); }
+.small { font-size: 12.5px; margin: 0 0 10px; }
+button, select, input { font-family: inherit; font-size: 13.5px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- Hero ---------- */
+.hero { background: var(--indigo); color: #fff; }
+.hero-in { max-width: 1240px; margin: 0 auto; padding: 18px 20px 30px; }
+.hero-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.logo {
+  width: 30px; height: 30px; border-radius: 8px; background: var(--accent);
+  display: grid; place-items: center; font-weight: 700;
+}
+.brand-name { font-weight: 600; letter-spacing: .2px; }
+.hero-act { display: flex; gap: 8px; flex-wrap: wrap; }
+.hbtn {
+  background: transparent; color: #d9d8ff; border: 1px solid rgba(255,255,255,.22);
+  padding: 7px 12px; border-radius: 8px; cursor: pointer;
+}
+.hbtn:hover { background: rgba(255,255,255,.08); color: #fff; }
+.hbtn.solid { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.hero-body { margin-top: 26px; display: grid; grid-template-columns: 1.4fr 1fr; gap: 28px; align-items: end; }
+.hero-period { color: #b9b7f5; font-size: 13.5px; margin-bottom: 6px; }
+.hero-big { font-size: clamp(44px, 7vw, 76px); font-weight: 700; line-height: 1; letter-spacing: -1.5px; }
+.hero-big small { font-size: .32em; font-weight: 500; letter-spacing: 0; color: #cfcdfb; margin-left: 10px; }
+.hero-line { margin-top: 12px; font-size: 16px; color: #e6e5ff; }
+.hero-line b { color: #fff; }
+.hero-meter { display: grid; gap: 14px; }
+.meter-lbl { display: flex; justify-content: space-between; font-size: 13px; color: #cfcdfb; margin-bottom: 5px; }
+.meter-lbl b { color: #fff; font-weight: 600; }
+.meter { height: 10px; border-radius: 99px; background: rgba(255,255,255,.12); overflow: hidden; position: relative; }
+.meter > i { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 99px; }
+.meter > i.ghost { background: rgba(255,255,255,.35); }
+.hero-skel { height: 110px; border-radius: 12px; background: rgba(255,255,255,.07); grid-column: 1 / -1; }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 12.5px; font-weight: 600; }
+.pill.up { background: rgba(58, 214, 145, .18); color: #7df0bd; }
+.pill.down { background: rgba(255, 110, 120, .18); color: #ffb0b6; }
+.pill.flat { background: rgba(255,255,255,.12); color: #ddd; }
+
+/* ---------- Filters ---------- */
+.filters { background: var(--card); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+.filters .wrap { padding-top: 12px; padding-bottom: 12px; display: grid; gap: 10px; }
+.frow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.flbl { color: var(--muted); font-size: 13px; }
+.seg { display: inline-flex; background: var(--bg); border: 1px solid var(--line); border-radius: 9px; padding: 3px; flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; padding: 6px 12px; border-radius: 7px; cursor: pointer; color: var(--muted); }
+.seg button.active { background: var(--card); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(30,27,75,.12); }
+.seg.sm button { padding: 4px 10px; font-size: 12.5px; }
+.inp { border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; background: var(--card); color: var(--ink); }
+.inp.sm { padding: 5px 9px; font-size: 12.5px; }
+.dates { display: flex; align-items: center; gap: 8px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip {
+  border: 1px solid var(--line); background: var(--card); border-radius: 99px;
+  padding: 4px 12px; cursor: pointer; color: var(--muted); font-size: 12.5px;
+}
+.chip.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+
+/* ---------- KPIs ---------- */
+main { padding-top: 20px; padding-bottom: 40px; }
+.kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.kpi { background: var(--card); padding: 14px 16px; }
+.kpi .k-l { color: var(--muted); font-size: 12.5px; }
+.kpi .k-v { font-size: 24px; font-weight: 600; margin: 2px 0; }
+.kpi .k-d { font-size: 12.5px; }
+.up { color: var(--up); }
+.down { color: var(--down); }
+
+/* ---------- Blocks ---------- */
+.block { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; margin-top: 16px; }
+.block h2 { font-size: 15px; margin: 0; font-weight: 600; }
+.bhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.bhead .muted { font-size: 12.5px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid2 .block { margin-top: 16px; }
+.chart-box { position: relative; height: 280px; }
+
+.insights { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.insights li { padding-left: 14px; border-left: 3px solid var(--accent); }
+.insights li.warn { border-left-color: var(--down); }
+
+/* ---------- Tables ---------- */
+.tscroll { overflow-x: auto; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl th {
+  text-align: right; font-weight: 500; color: var(--muted); padding: 8px 10px;
+  border-bottom: 1px solid var(--line); white-space: nowrap; font-size: 12.5px;
+}
+.tbl td { text-align: right; padding: 9px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.tbl th:first-child, .tbl td:first-child { text-align: left; }
+.tbl td.l { text-align: left; white-space: normal; }
+.tbl tr.tot td { font-weight: 600; background: var(--bg); }
+.tbl .sub { color: var(--muted); font-size: 11.5px; display: block; }
+.bar { height: 6px; background: var(--accent-soft); border-radius: 99px; overflow: hidden; min-width: 70px; }
+.bar > i { display: block; height: 100%; background: var(--accent); }
+.empty { text-align: center !important; color: var(--muted); padding: 22px !important; }
+
+.heat td { text-align: center; }
+.heat th { text-align: center; }
+.heat td.cell { min-width: 64px; }
+.heat .low { color: var(--down); font-weight: 600; }
+
+.miss { display: flex; flex-wrap: wrap; gap: 6px; }
+.miss span { background: #fdecee; color: var(--down); border-radius: 6px; padding: 3px 9px; font-size: 12.5px; }
+.ok-note { color: var(--up); }
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--indigo); color: #fff; padding: 9px 16px; border-radius: 8px;
+  opacity: 0; pointer-events: none; transition: .2s; font-size: 13px;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.bad { background: var(--down); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1000px) {
+  .kpis { grid-template-columns: repeat(3, 1fr); }
+  .grid2 { grid-template-columns: 1fr; gap: 0; }
+}
+@media (max-width: 700px) {
+  .hero-body { grid-template-columns: 1fr; }
+  .kpis { grid-template-columns: repeat(2, 1fr); }
+  .wrap { padding: 0 12px; }
+  .chart-box { height: 230px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ---------- Print ---------- */
+@media print {
+  .no-print, .filters { display: none !important; }
+  body { background: #fff; }
+  .hero { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .block, .kpis { break-inside: avoid; }
+  .chart-box { height: 220px; }
+}
+
+</style>
+</head>
+<body>
+
+  <!-- Hero band -->
+  <header class="hero">
+    <div class="hero-in">
+      <div class="hero-top">
+        <div class="brand">
+          <span class="logo">L</span>
+          <span class="brand-name">Litpax Production Report</span>
+        </div>
+        <div class="hero-act no-print">
+          <button class="hbtn" id="btnDaily">Daily CSV</button>
+          <button class="hbtn" id="btnSum">Summary CSV</button>
+          <button class="hbtn" id="btnPrint">Print</button>
+          <button class="hbtn solid" id="btnRefresh">Refresh</button>
+        </div>
+      </div>
+
+      <div class="hero-body" id="heroBody">
+        <div class="hero-skel"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Filters -->
+  <section class="filters no-print">
+    <div class="wrap">
+      <div class="frow">
+        <div class="seg" id="periodSeg">
+          <button data-p="yesterday">Yesterday</button>
+          <button data-p="week">This week</button>
+          <button data-p="lastweek">Last week</button>
+          <button data-p="month">This month</button>
+          <button data-p="lastmonth">Last month</button>
+          <button data-p="custom">Custom</button>
+        </div>
+        <div class="dates hidden" id="customWrap">
+          <input type="date" id="fFrom" class="inp"><span class="muted">to</span><input type="date" id="fTo" class="inp">
+        </div>
+      </div>
+      <div class="frow">
+        <label class="flbl" for="cmpSel">Compare with</label>
+        <select id="cmpSel" class="inp">
+          <option value="prev">Previous period</option>
+          <option value="lm">Same period last month</option>
+          <option value="custom">Custom period</option>
+          <option value="off">No comparison</option>
+        </select>
+        <div class="dates hidden" id="cmpWrap">
+          <input type="date" id="cFrom" class="inp"><span class="muted">to</span><input type="date" id="cTo" class="inp">
+        </div>
+      </div>
+      <div class="chips" id="lineChips"></div>
+    </div>
+  </section>
+
+  <main class="wrap" id="main">
+    <section class="kpis" id="kpis"></section>
+
+    <section class="block" id="insightsBlock">
+      <h2>What stands out</h2>
+      <ul class="insights" id="insights"></ul>
+    </section>
+
+    <section class="block">
+      <div class="bhead"><h2>Line performance</h2><span class="muted" id="lineNote"></span></div>
+      <div class="tscroll"><table class="tbl" id="lineTbl"></table></div>
+    </section>
+
+    <section class="block">
+      <div class="bhead"><h2>Daily trend</h2><span class="muted">Bars show achieved, the line shows plan, the dashed line shows the comparison period</span></div>
+      <div class="chart-box"><canvas id="cTrend"></canvas></div>
+    </section>
+
+    <section class="grid2">
+      <div class="block">
+        <div class="bhead"><h2>Target, plan and achieved</h2></div>
+        <div class="chart-box"><canvas id="cTpa"></canvas></div>
+      </div>
+      <div class="block">
+        <div class="bhead">
+          <h2>Single line trend</h2>
+          <select id="lineSel" class="inp sm no-print"></select>
+        </div>
+        <div class="chart-box"><canvas id="cLine"></canvas></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="bhead">
+        <h2>Week and month history</h2>
+        <div class="seg sm no-print" id="rollSeg">
+          <button data-r="weeks" class="active">Last 8 weeks</button>
+          <button data-r="months">Last 12 months</button>
+        </div>
+      </div>
+      <p class="muted small">Cell shows units achieved. Shade shows achievement against plan; red number means below 90%.</p>
+      <div class="tscroll"><table class="tbl heat" id="heatTbl"></table></div>
+    </section>
+
+    <section class="grid2">
+      <div class="block">
+        <div class="bhead"><h2>Model-wise planned quantity</h2></div>
+        <div class="tscroll"><table class="tbl" id="modelTbl"></table></div>
+      </div>
+      <div class="block">
+        <div class="bhead"><h2>Missing review entries</h2></div>
+        <div id="missing"></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="bhead">
+        <h2>Backlog and remarks</h2>
+        <input id="rq" class="inp sm no-print" placeholder="Search remarks">
+      </div>
+      <div class="tscroll"><table class="tbl" id="remTbl"></table></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="config.js"></script>
+  <script>
+'use strict';
+
+/* ================= State ================= */
+const S = {
+  data: null,
+  period: 'month',        // yesterday | week | lastweek | month | lastmonth | custom
+  cmp: 'prev',            // prev | lm | custom | off
+  from: '', to: '', cf: '', ct: '',
+  sel: null,              // Set of selected line names
+  lineSel: '',
+  roll: 'weeks',
+  rq: '',
+  charts: {}
+};
+
+/* ================= JSONP ================= */
+function api(action, params = {}) {
+  return new Promise((resolve, reject) => {
+    const cb = 'jp_' + Math.random().toString(36).slice(2);
+    const s = document.createElement('script');
+    const timer = setTimeout(() => { cleanup(); reject(new Error('Network timeout')); }, 30000);
+    function cleanup() { clearTimeout(timer); delete window[cb]; s.remove(); }
+    window[cb] = res => { cleanup(); resolve(res); };
+    const qs = Object.keys(params).filter(k => params[k] !== '' && params[k] != null)
+      .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k])).join('&');
+    s.src = CONFIG.API_URL + '?action=' + action + '&callback=' + cb + (qs ? '&' + qs : '');
+    s.onerror = () => { cleanup(); reject(new Error('Network error')); };
+    document.body.appendChild(s);
+  });
+}
+
+/* ================= Date helpers (UTC math on yyyy-MM-dd) ================= */
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const WD  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const pad = n => (n < 10 ? '0' : '') + n;
+function today() { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function dU(s) { const a = s.split('-').map(Number); return new Date(Date.UTC(a[0], a[1] - 1, a[2])); }
+function fU(d) { return d.toISOString().slice(0, 10); }
+function addD(s, n) { const t = dU(s); t.setUTCDate(t.getUTCDate() + n); return fU(t); }
+function dow(s) { return dU(s).getUTCDay(); }
+function prevWork(s) { let d = addD(s, -1); if (dow(d) === 0) d = addD(d, -1); return d; }
+function wkStart(s) { let diff = dow(s) - 1; if (diff < 0) diff += 7; return addD(s, -diff); }
+function mStart(s) { return s.slice(0, 8) + '01'; }
+function mEnd(s) { const a = s.split('-').map(Number); return fU(new Date(Date.UTC(a[0], a[1], 0))); }
+function shiftM(s, k) {
+  const a = s.split('-').map(Number);
+  const first = new Date(Date.UTC(a[0], a[1] - 1 + k, 1));
+  const last = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+  first.setUTCDate(Math.min(a[2], last));
+  return fU(first);
+}
+function span(a, b) { return Math.round((dU(b) - dU(a)) / 864e5) + 1; }
+function fd(s) { const d = dU(s); return d.getUTCDate() + ' ' + MON[d.getUTCMonth()]; }
+function fdw(s) { return WD[dow(s)] + ' ' + fd(s); }
+function fr(a, b) { return a === b ? fd(a) + ' ' + a.slice(0, 4) : fd(a) + ' – ' + fd(b) + ' ' + b.slice(0, 4); }
+function fmon(k) { const p = k.split('-'); return MON[Number(p[1]) - 1] + ' ' + p[0].slice(2); }
+
+/* ================= Number helpers ================= */
+const fmt = n => (Number(n) || 0).toLocaleString('en-IN');
+const pct = (a, b) => (b ? a / b * 100 : null);
+const fp  = v => (v == null ? '—' : Math.round(v) + '%');
+function esc(v) { return (v == null ? '' : String(v)).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function toast(msg, ok = true) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (ok ? '' : ' bad');
+  setTimeout(() => (t.className = 'toast'), 2600);
+}
+
+/* ================= Ranges ================= */
+const PERIOD_NAME = { yesterday: 'Yesterday', week: 'This week', lastweek: 'Last week',
+                      month: 'This month', lastmonth: 'Last month', custom: 'Custom period' };
+
+function computeRanges() {
+  const t = today(), lc = prevWork(t);
+  let f, to;
+  switch (S.period) {
+    case 'yesterday': f = to = lc; break;
+    case 'week':      f = wkStart(t); to = t; break;
+    case 'lastweek':  f = addD(wkStart(t), -7); to = addD(f, 6); break;
+    case 'month':     f = mStart(t); to = t; break;
+    case 'lastmonth': f = mStart(shiftM(mStart(t), -1)); to = mEnd(f); break;
+    default:          f = S.from || mStart(t); to = S.to || t; if (f > to) [f, to] = [to, f];
+  }
+  S.from = f; S.to = to;
+
+  let cf = '', ct = '';
+  if (S.cmp === 'prev') {
+    if (S.period === 'yesterday') { cf = ct = prevWork(f); }
+    else if (S.period === 'week' || S.period === 'lastweek') { cf = addD(f, -7); ct = addD(to, -7); }
+    else if (S.period === 'month') { cf = shiftM(f, -1); ct = shiftM(to, -1); }
+    else if (S.period === 'lastmonth') { cf = mStart(shiftM(f, -1)); ct = mEnd(cf); }
+    else { const n = span(f, to); ct = addD(f, -1); cf = addD(f, -n); }
+  } else if (S.cmp === 'lm') {
+    cf = shiftM(f, -1); ct = shiftM(to, -1);
+  } else if (S.cmp === 'custom') {
+    cf = S.cf; ct = S.ct;
+    if (cf && ct && cf > ct) [cf, ct] = [ct, cf];
+  }
+  S.cf = cf; S.ct = ct;
+}
+
+function syncFilterUI() {
+  document.querySelectorAll('#periodSeg button').forEach(b => b.classList.toggle('active', b.dataset.p === S.period));
+  document.getElementById('customWrap').classList.toggle('hidden', S.period !== 'custom');
+  document.getElementById('cmpWrap').classList.toggle('hidden', S.cmp !== 'custom');
+  document.getElementById('cmpSel').value = S.cmp;
+  document.getElementById('fFrom').value = S.from;
+  document.getElementById('fTo').value = S.to;
+  document.getElementById('cFrom').value = S.cf;
+  document.getElementById('cTo').value = S.ct;
+}
+
+/* ================= Load ================= */
+async function load() {
+  computeRanges();
+  syncFilterUI();
+  document.getElementById('heroBody').innerHTML = '<div class="hero-skel"></div>';
+  try {
+    const r = await api('report', { from: S.from, to: S.to, cmpFrom: S.cf, cmpTo: S.ct });
+    if (!r.ok) throw new Error(r.message || r.error || 'Report could not be loaded');
+    S.data = r;
+    const names = r.lines.map(l => l.LineName);
+    if (!S.sel) S.sel = new Set(names);
+    else S.sel = new Set([...S.sel].filter(n => names.includes(n)));
+    if (!S.sel.size) S.sel = new Set(names);
+    render();
+  } catch (e) {
+    document.getElementById('heroBody').innerHTML =
+      `<div><div class="hero-period">Report not loaded</div>
+       <div class="hero-line">${esc(e.message)}. Check the connection and press Refresh.</div></div>`;
+    toast(e.message, false);
+  }
+}
+
+/* ================= Aggregation ================= */
+function lineMap() { const m = {}; S.data.lines.forEach(l => m[l.LineName] = l); return m; }
+function selNames() { return S.data.lines.map(l => l.LineName).filter(n => S.sel.has(n)); }
+
+/* plan counts only on days whose result is known (closed) */
+function aggregate(block, names) {
+  const lc = prevWork(today()), LM = lineMap();
+  const per = {};
+  names.forEach(n => per[n] = { p: 0, a: 0, dd: 0, hit: 0, hb: 0, sh: 0, pend: 0, tgt: 0 });
+  const trend = [];
+  let closedDays = 0;
+  (block ? block.days : []).forEach(day => {
+    const closed = day.date <= lc;
+    if (closed) closedDays++;
+    let tp = 0, ta = 0, has = false;
+    names.forEach(n => {
+      const c = day.v[n]; if (!c) return;
+      const s = per[n];
+      if (c.ha) {
+        has = true; s.a += c.a; s.dd++; s.sh += c.sh || 0; ta += c.a;
+        if (c.hp) { s.p += c.p; tp += c.p; if (c.p > 0) { s.hb++; if (c.a >= c.p) s.hit++; } }
+      } else if (c.hp && !closed) s.pend += c.p;
+    });
+    trend.push({ date: day.date, p: has ? tp : null, a: has ? ta : null });
+  });
+  const T = { p: 0, a: 0, hit: 0, hb: 0, pend: 0, tgt: 0 };
+  names.forEach(n => {
+    const s = per[n];
+    s.tgt = ((LM[n] || {}).PerDayTarget || 0) * closedDays;
+    ['p', 'a', 'hit', 'hb', 'pend', 'tgt'].forEach(k => T[k] += s[k]);
+  });
+  T.days = trend.filter(t => t.a != null).length;
+  T.closedDays = closedDays;
+  T.avg = T.days ? T.a / T.days : 0;
+  return { per, T, trend };
+}
+
+/* ================= Render ================= */
+function render() {
+  const names = selNames();
+  const cur = aggregate(S.data.cur, names);
+  const cmp = S.data.cmp ? aggregate(S.data.cmp, names) : null;
+  renderChips();
+  renderHero(cur, cmp);
+  renderKpis(cur, cmp);
+  renderInsights(cur, cmp, names);
+  renderLineTable(cur, cmp, names);
+  renderTrend(cur, cmp);
+  renderTpa(cur, names);
+  renderLineSel(names);
+  renderLineChart();
+  renderHeat(names);
+  renderModels(names);
+  renderMissing();
+  renderRemarks();
+}
+
+/* ---- line chips ---- */
+function renderChips() {
+  const all = S.data.lines.map(l => l.LineName);
+  const allOn = S.sel.size === all.length;
+  document.getElementById('lineChips').innerHTML =
+    `<button class="chip ${allOn ? 'on' : ''}" data-all="1">All lines</button>` +
+    all.map(n => `<button class="chip ${!allOn && S.sel.has(n) ? 'on' : ''}" data-n="${esc(n)}">${esc(n)}</button>`).join('');
+  document.querySelectorAll('#lineChips .chip').forEach(c => c.onclick = () => {
+    if (c.dataset.all) S.sel = new Set(all);
+    else {
+      const n = c.dataset.n;
+      if (allOn) S.sel = new Set([n]);                 // first click isolates a line
+      else if (S.sel.has(n)) S.sel.delete(n);
+      else S.sel.add(n);
+      if (!S.sel.size) S.sel = new Set(all);
+    }
+    render();
+  });
+}
+
+/* ---- delta helpers ---- */
+function chg(c, p) { return p ? (c - p) / Math.abs(p) * 100 : null; }
+function dRel(c, p) {
+  if (!S.data.cmp) return '<span class="muted">No comparison</span>';
+  const d = chg(c, p);
+  if (d == null) return '<span class="muted">No data to compare</span>';
+  const cls = d > 0.05 ? 'up' : d < -0.05 ? 'down' : 'muted';
+  return `<span class="${cls}">${d > 0 ? '▲' : d < 0 ? '▼' : ''} ${Math.abs(d).toFixed(1)}%</span> <span class="muted">vs ${fmt(Math.round(p))}</span>`;
+}
+function dPts(c, p) {
+  if (!S.data.cmp) return '<span class="muted">No comparison</span>';
+  if (c == null || p == null) return '<span class="muted">No data to compare</span>';
+  const d = c - p, cls = d > 0.05 ? 'up' : d < -0.05 ? 'down' : 'muted';
+  return `<span class="${cls}">${d > 0 ? '▲' : d < 0 ? '▼' : ''} ${Math.abs(d).toFixed(1)} pts</span> <span class="muted">vs ${fp(p)}</span>`;
+}
+
+/* ---- hero ---- */
+function renderHero(cur, cmp) {
+  const T = cur.T, ap = pct(T.a, T.p), at = pct(T.a, T.tgt);
+  let pill = '';
+  if (cmp) {
+    const d = chg(T.a, cmp.T.a);
+    pill = d == null ? '' :
+      `<span class="pill ${d > 0 ? 'up' : d < 0 ? 'down' : 'flat'}">${d > 0 ? '▲' : d < 0 ? '▼' : ''} ${Math.abs(d).toFixed(1)}%</span>
+       <span style="color:#b9b7f5;font-size:13px"> vs ${fr(S.data.cmp.from, S.data.cmp.to)}</span>`;
+  }
+  const meter = (label, v, extra) => `
+    <div><div class="meter-lbl"><span>${label}</span><b>${fp(v)}</b></div>
+    <div class="meter"><i style="width:${Math.min(100, v || 0)}%"></i></div>${extra || ''}</div>`;
+  const pend = T.pend ? `<div class="meter-lbl" style="margin-top:4px"><span>Today's plan, result due at next review</span><b>${fmt(T.pend)}</b></div>` : '';
+
+  document.getElementById('heroBody').innerHTML = `
+    <div>
+      <div class="hero-period">${PERIOD_NAME[S.period]}, ${fr(S.from, S.to)}</div>
+      <div class="hero-big">${fmt(T.a)}<small>units achieved</small></div>
+      <div class="hero-line">${T.p ? `That is <b>${fp(ap)}</b> of the ${fmt(T.p)} planned.` : 'No closed plan in this period yet.'} ${pill}</div>
+    </div>
+    <div class="hero-meter">
+      ${meter('Against plan', ap)}
+      ${meter('Against line targets', at)}
+      ${pend}
+    </div>`;
+}
+
+/* ---- KPIs ---- */
+function renderKpis(cur, cmp) {
+  const T = cur.T, P = cmp ? cmp.T : {};
+  const k = (l, v, d) => `<div class="kpi"><div class="k-l">${l}</div><div class="k-v">${v}</div><div class="k-d">${d}</div></div>`;
+  const vr = T.a - T.p;
+  document.getElementById('kpis').innerHTML =
+    k('Achieved', fmt(T.a), dRel(T.a, P.a)) +
+    k('Planned', fmt(T.p), dRel(T.p, P.p)) +
+    k('Achievement', fp(pct(T.a, T.p)), dPts(pct(T.a, T.p), cmp ? pct(P.a, P.p) : null)) +
+    k('Variance', `<span class="${vr > 0 ? 'up' : vr < 0 ? 'down' : ''}">${vr > 0 ? '+' : ''}${fmt(vr)}</span>`,
+      cmp ? `<span class="muted">Comparison: ${P.a - P.p > 0 ? '+' : ''}${fmt(P.a - P.p)}</span>` : '<span class="muted">No comparison</span>') +
+    k('Average per day', fmt(Math.round(T.avg)), dRel(T.avg, P.avg)) +
+    k('Target achievement', fp(pct(T.a, T.tgt)), dPts(pct(T.a, T.tgt), cmp ? pct(P.a, P.tgt) : null));
+}
+
+/* ---- insights ---- */
+function renderInsights(cur, cmp, names) {
+  const out = [];
+  const rows = names.map(n => ({ n, s: cur.per[n], c: cmp ? cmp.per[n] : null, ap: pct(cur.per[n].a, cur.per[n].p) }));
+  const withP = rows.filter(r => r.s.p > 0);
+
+  if (withP.length > 1) {
+    const best = withP.reduce((a, b) => (b.ap > a.ap ? b : a));
+    const worst = withP.reduce((a, b) => (b.ap < a.ap ? b : a));
+    out.push({ t: `${best.n} leads at ${fp(best.ap)} of plan.` });
+    if (worst !== best && worst.ap < 100)
+      out.push({ t: `${worst.n} is at ${fp(worst.ap)} of plan, short by ${fmt(worst.s.p - worst.s.a)} units.`, w: 1 });
+  }
+  rows.filter(r => r.s.tgt > 0 && r.s.p > 0 && r.s.p < r.s.tgt * 0.95).forEach(r =>
+    out.push({ t: `${r.n} planned only ${fp(pct(r.s.p, r.s.tgt))} of its target, so the plan itself is set below target.`, w: 1 }));
+
+  if (cmp) {
+    const mv = rows.filter(r => r.c && r.c.a > 0).map(r => ({ n: r.n, d: chg(r.s.a, r.c.a) }))
+      .sort((a, b) => Math.abs(b.d) - Math.abs(a.d))[0];
+    if (mv && Math.abs(mv.d) >= 5)
+      out.push({ t: `${mv.n} is ${mv.d > 0 ? 'up' : 'down'} ${Math.abs(mv.d).toFixed(1)}% on the comparison period.`, w: mv.d < 0 });
+  }
+  const hr = rows.filter(r => r.s.hb >= 3).sort((a, b) => a.s.hit / a.s.hb - b.s.hit / b.s.hb)[0];
+  if (hr && hr.s.hit / hr.s.hb < 0.7)
+    out.push({ t: `${hr.n} met its daily plan on ${hr.s.hit} of ${hr.s.hb} days.`, w: 1 });
+
+  const miss = missingDays().length;
+  if (miss) out.push({ t: `${miss} working day${miss > 1 ? 's have' : ' has'} no review entry.`, w: 1 });
+  if (cur.T.pend) out.push({ t: `Today's plan is ${fmt(cur.T.pend)} units; the result comes in with the next review.` });
+
+  document.getElementById('insights').innerHTML = out.length
+    ? out.map(o => `<li class="${o.w ? 'warn' : ''}">${esc(o.t)}</li>`).join('')
+    : '<li>Nothing unusual in this period.</li>';
+}
+
+/* ---- line table ---- */
+function lineRows(cur, cmp, names) {
+  const LM = lineMap();
+  return names.map(n => {
+    const s = cur.per[n], c = cmp ? cmp.per[n] : null;
+    return {
+      n, a: s.a, p: s.p, ap: pct(s.a, s.p), v: s.a - s.p,
+      pa: c ? c.a : null, ch: c ? chg(s.a, c.a) : null,
+      avg: s.dd ? s.a / s.dd : 0, dt: (LM[n] || {}).PerDayTarget || 0,
+      tp: pct(s.a, s.tgt), pt: pct(s.p, s.tgt), hit: s.hit, hb: s.hb
+    };
+  });
+}
+function renderLineTable(cur, cmp, names) {
+  const rows = lineRows(cur, cmp, names);
+  const cls = v => (v == null ? '' : v >= 100 ? 'up' : v < 90 ? 'down' : '');
+  const chC = v => (v == null ? '<span class="muted">—</span>' :
+    `<span class="${v > 0 ? 'up' : v < 0 ? 'down' : ''}">${v > 0 ? '▲' : v < 0 ? '▼' : ''} ${Math.abs(v).toFixed(1)}%</span>`);
+  const tr = r => `<tr>
+    <td>${esc(r.n)}</td>
+    <td><b>${fmt(r.a)}</b></td><td>${fmt(r.p)}</td>
+    <td class="${cls(r.ap)}">${fp(r.ap)}</td>
+    <td class="${r.v > 0 ? 'up' : r.v < 0 ? 'down' : ''}">${r.v > 0 ? '+' : ''}${fmt(r.v)}</td>
+    ${cmp ? `<td>${r.pa == null ? '—' : fmt(r.pa)}</td><td>${chC(r.ch)}</td>` : ''}
+    <td>${fmt(Math.round(r.avg))}</td><td>${r.dt ? fmt(r.dt) : '—'}</td>
+    <td class="${cls(r.tp)}">${fp(r.tp)}</td>
+    <td class="${r.pt != null && r.pt < 95 ? 'down' : ''}">${fp(r.pt)}</td>
+    <td>${r.hb ? `${r.hit}/${r.hb}<span class="sub">${fp(pct(r.hit, r.hb))}</span>` : '—'}</td>
+  </tr>`;
+  const T = cur.T, P = cmp ? cmp.T : null;
+  const tot = {
+    n: 'Total', a: T.a, p: T.p, ap: pct(T.a, T.p), v: T.a - T.p,
+    pa: P ? P.a : null, ch: P ? chg(T.a, P.a) : null, avg: T.avg,
+    dt: rows.reduce((s, r) => s + r.dt, 0), tp: pct(T.a, T.tgt), pt: pct(T.p, T.tgt), hit: T.hit, hb: T.hb
+  };
+  document.getElementById('lineTbl').innerHTML = `
+    <thead><tr>
+      <th>Line</th><th>Achieved</th><th>Planned</th><th>Achievement</th><th>Variance</th>
+      ${cmp ? '<th>Comparison</th><th>Change</th>' : ''}
+      <th>Avg per day</th><th>Day target</th><th>Target %</th><th>Plan vs target</th><th>Plan met</th>
+    </tr></thead>
+    <tbody>${rows.map(tr).join('') || `<tr><td colspan="13" class="empty">No lines selected.</td></tr>`}
+      ${rows.length > 1 ? tr(tot).replace('<tr>', '<tr class="tot">') : ''}</tbody>`;
+  document.getElementById('lineNote').textContent =
+    `${T.closedDays} working day${T.closedDays === 1 ? '' : 's'} closed, Sundays excluded`;
+}
+
+/* ---- charts ---- */
+function mkChart(id, cfg) {
+  if (S.charts[id]) S.charts[id].destroy();
+  const el = document.getElementById(id);
+  if (!el || !window.Chart) return;
+  S.charts[id] = new Chart(el, cfg);
+}
+function opts() {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { position: 'top', align: 'end', labels: { boxWidth: 10, boxHeight: 10 } } },
+    scales: {
+      y: { beginAtZero: true, grid: { color: '#eef0f6' } },
+      x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true } }
+    }
+  };
+}
+function renderTrend(cur, cmp) {
+  const ds = [
+    { type: 'bar', label: 'Achieved', data: cur.trend.map(t => t.a), backgroundColor: '#635bff', borderRadius: 4, order: 2 },
+    { type: 'line', label: 'Planned', data: cur.trend.map(t => t.p), borderColor: '#1e1b4b',
+      borderWidth: 2, pointRadius: 2, tension: .25, order: 1, spanGaps: true }
+  ];
+  if (cmp) ds.push({ type: 'line', label: 'Comparison achieved', data: cur.trend.map((t, i) => (cmp.trend[i] || {}).a ?? null),
+    borderColor: '#9a9cb8', borderDash: [5, 4], borderWidth: 1.5, pointRadius: 0, tension: .25, order: 0, spanGaps: true });
+  mkChart('cTrend', { type: 'bar', data: { labels: cur.trend.map(t => fd(t.date)), datasets: ds }, options: opts() });
+}
+function renderTpa(cur, names) {
+  mkChart('cTpa', {
+    type: 'bar',
+    data: {
+      labels: names,
+      datasets: [
+        { label: 'Target', data: names.map(n => cur.per[n].tgt), backgroundColor: '#dcdaff', borderRadius: 4 },
+        { label: 'Planned', data: names.map(n => cur.per[n].p), backgroundColor: '#a5a0ff', borderRadius: 4 },
+        { label: 'Achieved', data: names.map(n => cur.per[n].a), backgroundColor: '#635bff', borderRadius: 4 }
+      ]
+    },
+    options: opts()
+  });
+}
+function renderLineSel(names) {
+  if (!names.includes(S.lineSel)) S.lineSel = names[0] || '';
+  const sel = document.getElementById('lineSel');
+  sel.innerHTML = names.map(n => `<option ${n === S.lineSel ? 'selected' : ''}>${esc(n)}</option>`).join('');
+}
+function renderLineChart() {
+  const n = S.lineSel, days = S.data.cur.days;
+  const dt = (lineMap()[n] || {}).PerDayTarget || 0;
+  const ds = [
+    { type: 'bar', label: 'Achieved', data: days.map(d => (d.v[n] && d.v[n].ha) ? d.v[n].a : null), backgroundColor: '#635bff', borderRadius: 4, order: 2 },
+    { type: 'line', label: 'Planned', data: days.map(d => (d.v[n] && d.v[n].hp) ? d.v[n].p : null),
+      borderColor: '#1e1b4b', borderWidth: 2, pointRadius: 2, tension: .25, order: 1, spanGaps: true }
+  ];
+  if (dt) ds.push({ type: 'line', label: 'Day target', data: days.map(() => dt), borderColor: '#a5a0ff',
+    borderDash: [4, 4], borderWidth: 1.5, pointRadius: 0, order: 0 });
+  mkChart('cLine', { type: 'bar', data: { labels: days.map(d => fd(d.date)), datasets: ds }, options: opts() });
+}
+
+/* ---- week / month heat table ---- */
+function renderHeat(names) {
+  const R = S.data.rollup[S.roll] || [];
+  const head = R.map(b => `<th>${S.roll === 'weeks' ? fd(b.from) : fmon(b.key)}</th>`).join('');
+  const cell = o => {
+    if (!o || !o.dd) return '<td class="cell muted">—</td>';
+    const pc = pct(o.a, o.p);
+    const alpha = pc == null ? 0.05 : Math.max(0.06, Math.min(1, pc / 110)) * 0.42;
+    return `<td class="cell" style="background:rgba(99,91,255,${alpha.toFixed(3)})" title="Planned ${fmt(o.p)}, ${fp(pc)} achieved">
+      <span class="${pc != null && pc < 90 ? 'low' : ''}">${fmt(o.a)}</span><span class="sub">${fp(pc)}</span></td>`;
+  };
+  const rows = names.map(n => `<tr><td>${esc(n)}</td>${R.map(b => cell(b.byLine[n])).join('')}</tr>`).join('');
+  const tot = R.map(b => {
+    const o = { p: 0, a: 0, dd: 0 };
+    names.forEach(n => { const x = b.byLine[n]; if (x) { o.p += x.p; o.a += x.a; o.dd += x.dd; } });
+    return cell(o);
+  }).join('');
+  document.getElementById('heatTbl').innerHTML =
+    `<thead><tr><th>Line</th>${head}</tr></thead>
+     <tbody>${rows}${names.length > 1 ? `<tr class="tot"><td>Total</td>${tot}</tr>` : ''}</tbody>`;
+}
+
+/* ---- models ---- */
+function renderModels(names) {
+  const list = (S.data.cur.models || []).filter(m => names.includes(m.LineName));
+  const max = Math.max(1, ...list.map(m => m.qty));
+  document.getElementById('modelTbl').innerHTML = `
+    <thead><tr><th>Model</th><th>Line</th><th>Planned qty</th><th>Days</th><th></th></tr></thead>
+    <tbody>${list.map(m => `<tr>
+      <td>${esc(m.Model)}</td><td class="l">${esc(m.LineName)}</td><td><b>${fmt(m.qty)}</b></td><td>${m.days}</td>
+      <td><div class="bar"><i style="width:${m.qty / max * 100}%"></i></div></td></tr>`).join('')
+      || '<tr><td colspan="5" class="empty">No model breakdown was entered in this period.</td></tr>'}</tbody>`;
+}
+
+/* ---- missing entries (working days before today) ---- */
+function missingDays() {
+  const t = today();
+  return (S.data.cur.days || []).filter(d => d.date < t && !d.entry).map(d => d.date);
+}
+function renderMissing() {
+  const m = missingDays();
+  document.getElementById('missing').innerHTML = m.length
+    ? `<p class="muted small">${m.length} working day${m.length > 1 ? 's' : ''} without a saved review.</p>
+       <div class="miss">${m.map(d => `<span>${fdw(d)}</span>`).join('')}</div>`
+    : '<p class="ok-note">A review was saved on every working day in this period.</p>';
+}
+
+/* ---- remarks ---- */
+function renderRemarks() {
+  const q = S.rq.toLowerCase();
+  const list = (S.data.cur.remarks || [])
+    .filter(r => S.sel.has(r.line))
+    .filter(r => !q || (r.line + ' ' + r.backlog + ' ' + r.remarks + ' ' + r.by).toLowerCase().includes(q));
+  document.getElementById('remTbl').innerHTML = `
+    <thead><tr><th>Review date</th><th>Line</th><th style="text-align:left">Backlog</th><th style="text-align:left">Remarks</th><th>Entered by</th></tr></thead>
+    <tbody>${list.map(r => `<tr>
+      <td>${fdw(r.date)}</td><td class="l">${esc(r.line)}</td>
+      <td class="l">${esc(r.backlog) || '<span class="muted">—</span>'}</td>
+      <td class="l">${esc(r.remarks) || '<span class="muted">—</span>'}</td>
+      <td>${esc(r.by)}</td></tr>`).join('')
+      || `<tr><td colspan="5" class="empty">${q ? 'No remarks match this search.' : 'No backlog or remarks recorded in this period.'}</td></tr>`}</tbody>`;
+}
+
+/* ================= Export ================= */
+function download(name, rows) {
+  const csv = rows.map(r => r.map(v => `"${(v == null ? '' : String(v)).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv' }));
+  a.download = name; a.click();
+}
+function exportDaily() {
+  if (!S.data) return;
+  const names = selNames(), rows = [['Production date', 'Day', 'Line', 'Planned', 'Achieved', 'Variance', 'Shifts']];
+  S.data.cur.days.forEach(d => names.forEach(n => {
+    const c = d.v[n]; if (!c || (!c.hp && !c.ha)) return;
+    rows.push([d.date, WD[dow(d.date)], n, c.hp ? c.p : '', c.ha ? c.a : '',
+      c.hp && c.ha ? c.a - c.p : '', c.sh || '']);
+  }));
+  if (rows.length < 2) return toast('Nothing to export for this period', false);
+  download(`Production_Daily_${S.from}_to_${S.to}.csv`, rows);
+}
+function exportSummary() {
+  if (!S.data) return;
+  const names = selNames();
+  const cur = aggregate(S.data.cur, names), cmp = S.data.cmp ? aggregate(S.data.cmp, names) : null;
+  const r2 = v => (v == null ? '' : Math.round(v * 10) / 10);
+  const rows = [['Period', fr(S.from, S.to)], ['Comparison', S.data.cmp ? fr(S.data.cmp.from, S.data.cmp.to) : 'None'], [],
+    ['Line', 'Achieved', 'Planned', 'Achievement %', 'Variance', 'Comparison achieved', 'Change %',
+     'Avg per day', 'Day target', 'Target %', 'Plan vs target %', 'Plan met days', 'Plan days']];
+  lineRows(cur, cmp, names).forEach(r => rows.push([r.n, r.a, r.p, r2(r.ap), r.v, r.pa ?? '', r2(r.ch),
+    r2(r.avg), r.dt || '', r2(r.tp), r2(r.pt), r.hit, r.hb]));
+  download(`Production_Summary_${S.from}_to_${S.to}.csv`, rows);
+}
+
+/* ================= Wire up ================= */
+if (window.Chart) {
+  Chart.defaults.font.family = "'IBM Plex Sans', system-ui, sans-serif";
+  Chart.defaults.color = '#6b6f8e';
+}
+document.querySelectorAll('#periodSeg button').forEach(b => b.onclick = () => { S.period = b.dataset.p; load(); });
+document.getElementById('fFrom').onchange = e => { S.from = e.target.value; if (S.from && S.to) load(); };
+document.getElementById('fTo').onchange   = e => { S.to = e.target.value; if (S.from && S.to) load(); };
+document.getElementById('cmpSel').onchange = e => { S.cmp = e.target.value; load(); };
+document.getElementById('cFrom').onchange = e => { S.cf = e.target.value; if (S.cf && S.ct) load(); };
+document.getElementById('cTo').onchange   = e => { S.ct = e.target.value; if (S.cf && S.ct) load(); };
+document.getElementById('lineSel').onchange = e => { S.lineSel = e.target.value; renderLineChart(); };
+document.querySelectorAll('#rollSeg button').forEach(b => b.onclick = () => {
+  S.roll = b.dataset.r;
+  document.querySelectorAll('#rollSeg button').forEach(x => x.classList.toggle('active', x === b));
+  if (S.data) renderHeat(selNames());
+});
+document.getElementById('rq').oninput = e => { S.rq = e.target.value; if (S.data) renderRemarks(); };
+document.getElementById('btnRefresh').onclick = load;
+document.getElementById('btnDaily').onclick = exportDaily;
+document.getElementById('btnSum').onclick = exportSummary;
+document.getElementById('btnPrint').onclick = () => window.print();
+
+load();
+
+</script>
+</body>
+</html>
