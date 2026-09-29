@@ -388,15 +388,17 @@ function computeRanges() {
   }
   S.from = f; S.to = to;
 
+  const tc = to > lc ? lc : to;          // last day whose result is known
   let cf = '', ct = '';
-  if (S.cmp === 'prev') {
+  if (tc < f) { /* nothing closed yet, e.g. Monday morning on "This week" */ }
+  else if (S.cmp === 'prev') {
     if (S.period === 'yesterday') { cf = ct = prevWork(f); }
-    else if (S.period === 'week' || S.period === 'lastweek') { cf = addD(f, -7); ct = addD(to, -7); }
-    else if (S.period === 'month') { cf = shiftM(f, -1); ct = shiftM(to, -1); }
+    else if (S.period === 'week' || S.period === 'lastweek') { cf = addD(f, -7); ct = addD(tc, -7); }
+    else if (S.period === 'month') { cf = shiftM(f, -1); ct = shiftM(tc, -1); }
     else if (S.period === 'lastmonth') { cf = mStart(shiftM(f, -1)); ct = mEnd(cf); }
-    else { const n = span(f, to); ct = addD(f, -1); cf = addD(f, -n); }
+    else { const n = span(f, tc); ct = addD(f, -1); cf = addD(f, -n); }
   } else if (S.cmp === 'lm') {
-    cf = shiftM(f, -1); ct = shiftM(to, -1);
+    cf = shiftM(f, -1); ct = shiftM(tc, -1);
   } else if (S.cmp === 'custom') {
     cf = S.cf; ct = S.ct;
     if (cf && ct && cf > ct) [cf, ct] = [ct, cf];
