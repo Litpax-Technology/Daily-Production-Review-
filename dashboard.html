@@ -282,13 +282,7 @@ main { padding-top: 20px; padding-bottom: 40px; }
       </div>
     </section>
 
-    <section class="block">
-      <div class="bhead">
-        <h2>Backlog and remarks</h2>
-        <input id="rq" class="inp sm no-print" placeholder="Search remarks">
-      </div>
-      <div class="tscroll"><table class="tbl" id="remTbl"></table></div>
-    </section>
+
   </main>
 
   <div id="toast" class="toast"></div>
@@ -484,7 +478,6 @@ function render() {
   renderHeat(names);
   renderModels(names);
   renderMissing();
-  renderRemarks();
 }
 
 /* ---- line chips ---- */
@@ -755,21 +748,6 @@ function renderMissing() {
     : '<p class="ok-note">A review was saved on every working day in this period.</p>';
 }
 
-/* ---- remarks ---- */
-function renderRemarks() {
-  const q = S.rq.toLowerCase();
-  const list = (S.data.cur.remarks || [])
-    .filter(r => S.sel.has(r.line))
-    .filter(r => !q || (r.line + ' ' + r.backlog + ' ' + r.remarks + ' ' + r.by).toLowerCase().includes(q));
-  document.getElementById('remTbl').innerHTML = `
-    <thead><tr><th>Review date</th><th>Line</th><th style="text-align:left">Backlog</th><th style="text-align:left">Remarks</th><th>Entered by</th></tr></thead>
-    <tbody>${list.map(r => `<tr>
-      <td>${fdw(r.date)}</td><td class="l">${esc(r.line)}</td>
-      <td class="l">${esc(r.backlog) || '<span class="muted">—</span>'}</td>
-      <td class="l">${esc(r.remarks) || '<span class="muted">—</span>'}</td>
-      <td>${esc(r.by)}</td></tr>`).join('')
-      || `<tr><td colspan="5" class="empty">${q ? 'No remarks match this search.' : 'No backlog or remarks recorded in this period.'}</td></tr>`}</tbody>`;
-}
 
 /* ================= Export ================= */
 function download(name, rows) {
@@ -819,7 +797,6 @@ document.querySelectorAll('#rollSeg button').forEach(b => b.onclick = () => {
   document.querySelectorAll('#rollSeg button').forEach(x => x.classList.toggle('active', x === b));
   if (S.data) renderHeat(selNames());
 });
-document.getElementById('rq').oninput = e => { S.rq = e.target.value; if (S.data) renderRemarks(); };
 document.getElementById('btnRefresh').onclick = load;
 document.getElementById('btnDaily').onclick = exportDaily;
 document.getElementById('btnSum').onclick = exportSummary;
