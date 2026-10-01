@@ -18,7 +18,15 @@ const state = {
 const NUM = ['YesterdayAchieved', 'Shifts', 'PlanYesterday', 'PlanToday'];
 
 /* ================= JSONP (timeout + resilience) ================= */
-function api(action, params = {}) {
+const RETRY_SAFE = ['bootstrap', 'getDay', 'dashboard', 'dashboardRange', 'listHistory', 'saveDay'];
+async function api(action, params = {}) {
+  const tries = RETRY_SAFE.includes(action) ? 2 : 1;
+  for (let i = 0; i < tries; i++) {
+    try { return await apiOnce(action, params); }
+    catch (e) { if (i === tries - 1) throw e; await new Promise(r => setTimeout(r, 1500)); }
+  }
+}
+function apiOnce(action, params = {}) {
   return new Promise((resolve, reject) => {
     const cb = 'jp_' + Math.random().toString(36).slice(2);
     const s = document.createElement('script');
@@ -59,15 +67,25 @@ function openModal(html) {
 function closeModal() { document.getElementById('modalWrap').classList.add('hidden'); }
 
 /* ================= Boot ================= */
+function applyBoot(r) {
+  state.lines = r.lines || [];
+  state.models = r.models || [];
+  state.config = r.config || {};
+}
 async function boot() {
   try {
     const r = await api('bootstrap');
-    if (!r.ok) return toast(r.message || 'Load failed', false);
-    state.lines = r.lines || [];
-    state.models = r.models || [];
-    state.config = r.config || {};
+    if (!r.ok) return toast(r.message || r.error || 'Load failed', false);
+    applyBoot(r);
+    localStorage.setItem('dpr_boot', JSON.stringify(r));
     render();
   } catch (e) {
+    const cached = JSON.parse(localStorage.getItem('dpr_boot') || 'null');
+    if (cached) {
+      applyBoot(cached);
+      render();
+      return toast('Server nahi mila — entries draft me save ho rahi hain', false);
+    }
     document.getElementById('page').innerHTML =
       `<div class="empty">Could not reach the server.<br><span class="muted">${esc(e.message)}</span>
        <br><button class="btn btn-primary" style="width:auto;margin-top:14px" onclick="boot()">Retry</button></div>`;
@@ -585,7 +603,7 @@ async function mutate(action, params, okMsg) {
     toast(okMsg);
     closeModal();
     const b = await api('bootstrap');
-    if (b.ok) { state.lines = b.lines || []; state.models = b.models || []; state.config = b.config || {}; }
+if (b.ok) { applyBoot(b); localStorage.setItem('dpr_boot', JSON.stringify(b)); }
     render();
   } catch (e) { toast(e.message, false); }
 }
