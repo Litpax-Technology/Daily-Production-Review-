@@ -18,7 +18,7 @@ const state = {
 const NUM = ['YesterdayAchieved', 'Shifts', 'PlanYesterday', 'PlanToday'];
 
 /* ================= JSONP (timeout + resilience) ================= */
-const RETRY_SAFE = ['bootstrap', 'getDay', 'dashboard', 'dashboardRange', 'listHistory', 'saveDay'];
+const RETRY_SAFE = ['bootstrap', 'getDay', 'dashboard', 'dashboardRange', 'listHistory', 'saveDay', 'getCommits', 'saveCommit'];
 async function api(action, params = {}) {
   const tries = RETRY_SAFE.includes(action) ? 2 : 1;
   for (let i = 0; i < tries; i++) {
@@ -53,6 +53,12 @@ function weekStartStr(s) {
   d.setDate(d.getDate() - diff);
   return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 }
+
+function addDays(s, n) {
+  const d = new Date(s + 'T00:00:00'); d.setDate(d.getDate() + n);
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+}
+
 function esc(v) { return (v == null ? '' : String(v)).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 function num(v) { return Number(v) || 0; }
 function toast(msg, ok = true) {
@@ -356,7 +362,11 @@ async function loadDash() {
     } else {
       const r = await api('dashboardRange', { from: state.dash.from, to: state.dash.to });
       if (!r.ok) return toast(r.message || 'Load failed', false);
-      drawRangeDashboard(r);
+      let c = null;
+      if (state.dash.mode === 'week') {
+        try { const cr = await api('getCommits', { weekStart: state.dash.from }); if (cr.ok) c = cr; } catch (e) {}
+      }
+      drawRangeDashboard(r, c);
     }
   } catch (e) { body.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
@@ -399,11 +409,12 @@ function drawDashboard(r) {
 }
 
 /* ================= Range Dashboard (week / month / custom) ================= */
-function drawRangeDashboard(r) {
+function drawRangeDashboard(r, c) {
   let tA = 0, tP = 0;
   const cards = (r.summary || []).map(s => {
     tA += s.achieved; tP += s.plan;
     const pct = s.plan ? Math.round(s.achieved / s.plan * 100) : 0;
+    const pend = s.plan ? pct - 100 : 0;
     const vcls = s.variance > 0 ? 'up' : s.variance < 0 ? 'down' : '';
     return `<div class="card fade-in">
       <div class="card-top"><span class="cname">${esc(s.LineName)}</span>
@@ -414,7 +425,9 @@ function drawRangeDashboard(r) {
         <div class="${vcls}"><b>${s.plan ? (s.variance>0?'+':'')+s.variance : '—'}</b><span>Variance</span></div>
       </div>
       <div class="prog"><div class="prog-bar" style="width:${Math.min(100,pct)}%"></div></div>
-      <div class="prog-lbl muted">Achievement: ${pct}%</div>
+      <div class="prog-lbl muted">Achievement: ${pct}% &nbsp;|&nbsp;
+        <span class="pend ${pend >= 0 ? 'up' : 'down'}">Pending: ${pend > 0 ? '+' : ''}${pend}%</span></div>
+      ${commitHtml(s.LineName, c)}
     </div>`;
   }).join('');
 
@@ -433,6 +446,30 @@ function drawRangeDashboard(r) {
 
   drawTrendChart(r);
   drawRangeBar(r);
+}
+
+function commitHtml(line, c) {
+  if (!c) return '';
+  const cur = c.current[line], nxt = c.next[line];
+  const fmt = v => (v === '' || v == null) ? '—' : (Number(v) > 0 ? '+' : '') + v + '%';
+  return `<div class="commit">
+    <div class="commit-row"><span class="muted">Is week commit</span><b>${fmt(cur)}</b></div>
+    <div class="commit-row"><span class="muted">Next week commit</span>
+      <input class="cin commit-in" inputmode="numeric" placeholder="-5" value="${esc(nxt ?? '')}">
+      <button class="btn btn-ghost sm" data-line="${esc(line)}" onclick="saveCommit(this)">Save</button>
+    </div>
+  </div>`;
+}
+
+async function saveCommit(btn) {
+  const v = btn.previousElementSibling.value.trim();
+  if (v === '' || isNaN(Number(v))) return toast('Number daalo (jaise -5)', false);
+  btn.disabled = true;
+  try {
+    const r = await api('saveCommit', { weekStart: addDays(state.dash.from, 7), line: btn.dataset.line, pct: v });
+    toast(r.ok ? 'Commitment saved' : (r.message || 'Save failed'), r.ok);
+  } catch (e) { toast(e.message, false); }
+  finally { btn.disabled = false; }
 }
 
 function drawTrendChart(r) {
