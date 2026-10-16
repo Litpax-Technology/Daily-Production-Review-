@@ -230,3 +230,10 @@ body {
   .bar { gap: 11px; }
   .cin { width: 58px; } .cin.wide { width: 124px; }
 }
+
+.pend.up{color:#16a34a;font-weight:600}
+.pend.down{color:#dc2626;font-weight:600}
+.commit{margin-top:12px;padding-top:10px;border-top:1px dashed #e6e8f0;display:grid;gap:8px}
+.commit-row{display:flex;align-items:center;gap:8px;font-size:13px}
+.commit-row .muted{flex:1}
+.commit-in{width:64px;text-align:center}
