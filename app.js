@@ -429,7 +429,10 @@ function drawRangeDashboard(r, c) {
       </div>
       <div class="prog"><div class="prog-bar" style="width:${Math.min(100,pct)}%"></div></div>
       <div class="prog-lbl muted">Achievement: ${pct}% &nbsp;|&nbsp;
-        <span class="pend ${pend >= 0 ? 'up' : 'down'}">Pending: ${pend > 0 ? '+' : ''}${pend}%</span></div>
+        <span class="pend ${pend >= 0 ? 'up' : 'down'}">${
+          pend < 0 ? 'Pending: ' + Math.abs(pend) + '%'
+          : pend > 0 ? 'Extra: +' + pend + '%'
+          : 'Target done ✓'}</span></div>
       ${commitHtml(s.LineName, c)}
     </div>`;
   }).join('');
