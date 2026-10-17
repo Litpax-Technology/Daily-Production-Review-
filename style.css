@@ -238,4 +238,11 @@ body {
 .commit-row .muted{flex:1}
 .commit-in{width:64px;text-align:center}
 
+.wt-bar { display: flex; gap: 10px; align-items: center; }
+.wt-bar .input { width: auto; }
+.wt-lbl { font-size: 12px; margin: -4px 0 8px; }
+.wt-in { max-width: 120px; }
+.wt-tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #eef0f6; color: #64748b; }
+.wt-tag.ok { background: #e0f7ec; color: #0f9d58; }
+
 
