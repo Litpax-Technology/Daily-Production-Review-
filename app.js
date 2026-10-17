@@ -410,31 +410,26 @@ function drawDashboard(r) {
 
 /* ================= Range Dashboard (week / month / custom) ================= */
 function drawRangeDashboard(r, c) {
+  const isWeek = state.dash.mode === 'week';
   let tA = 0, tP = 0;
   const cards = (r.summary || []).map(s => {
-    tA += s.achieved; tP += s.plan;
-    const pct = s.plan ? Math.round(s.achieved / s.plan * 100) : 0;
-    const pend = s.plan ? pct - 100 : 0;
-    const vcls = s.variance > 0 ? 'up' : s.variance < 0 ? 'down' : '';
-    const tPctL = s.target ? Math.round(s.achieved / s.target * 100) : 0;
-    const wkPct = s.weeklyTarget ? Math.round(s.achieved / s.weeklyTarget * 100) : 0;
-    const isWeek = state.dash.mode === 'week';
+    const plan = isWeek ? (s.weeklyTarget || 0) : s.plan;
+    const variance = s.achieved - plan;
+    tA += s.achieved; tP += plan;
+    const pct = plan ? Math.round(s.achieved / plan * 100) : 0;
+    const pend = plan ? pct - 100 : 0;
+    const vcls = variance > 0 ? 'up' : variance < 0 ? 'down' : '';
     return `<div class="card fade-in">
       <div class="card-top"><span class="cname">${esc(s.LineName)}</span>
         <span class="badge">${s.days} day${s.days===1?'':'s'}</span></div>
       <div class="card-nums">
         <div><b>${s.achieved}</b><span>Achieved</span></div>
-        <div><b>${s.plan || '—'}</b><span>Plan</span></div>
-        <div class="${vcls}"><b>${s.plan ? (s.variance>0?'+':'')+s.variance : '—'}</b><span>Variance</span></div>
+        <div><b>${plan || '—'}</b><span>${isWeek ? 'Weekly Target' : 'Plan'}</span></div>
+        <div class="${vcls}"><b>${plan ? (variance>0?'+':'')+variance : '—'}</b><span>Variance</span></div>
       </div>
       <div class="prog"><div class="prog-bar" style="width:${Math.min(100,pct)}%"></div></div>
       <div class="prog-lbl muted">Achievement: ${pct}% &nbsp;|&nbsp;
         <span class="pend ${pend >= 0 ? 'up' : 'down'}">Pending: ${pend > 0 ? '+' : ''}${pend}%</span></div>
-      <div class="tgt-row muted">Target: <b>${s.target || '—'}</b> (${s.perDay} × ${s.days}d) &nbsp;|&nbsp;
-        vs target: <span class="${tPctL >= 100 ? 'up' : 'down'}">${s.target ? tPctL + '%' : '—'}</span></div>
-      ${isWeek && s.weeklyTarget ? `
-        <div class="prog prog-wk"><div class="prog-bar" style="width:${Math.min(100, wkPct)}%"></div></div>
-        <div class="prog-lbl muted">Week: ${s.achieved} / ${s.weeklyTarget} (${wkPct}%)</div>` : ''}
       ${commitHtml(s.LineName, c)}
     </div>`;
   }).join('');
@@ -442,7 +437,7 @@ function drawRangeDashboard(r, c) {
   const tVar = tA - tP, tPct = tP ? Math.round(tA / tP * 100) : 0;
   document.getElementById('dashBody').innerHTML = `
     <div class="kpis">
-      <div class="kpi"><b>${tP}</b><span>Total plan</span></div>
+      <div class="kpi"><b>${tP}</b><span>${isWeek ? 'Total weekly target' : 'Total plan'}</span></div>
       <div class="kpi"><b>${tA}</b><span>Total achieved</span></div>
       <div class="kpi ${tVar>0?'up':tVar<0?'down':''}"><b>${tP?(tVar>0?'+':'')+tVar:'—'}</b><span>Total variance</span></div>
       <div class="kpi"><b>${tPct}%</b><span>Achievement</span></div>
@@ -461,7 +456,7 @@ function commitHtml(line, c) {
   const cur = c.current[line], nxt = c.next[line];
   const fmt = v => (v === '' || v == null) ? '—' : (Number(v) > 0 ? '+' : '') + v + '%';
   return `<div class="commit">
-    <div class="commit-row"><span class="muted">Is week commit</span><b>${fmt(cur)}</b></div>
+    <div class="commit-row"><span class="muted">This week commit</span><b>${fmt(cur)}</b></div>
     <div class="commit-row"><span class="muted">Next week commit</span>
       <input class="cin commit-in" inputmode="numeric" placeholder="-5" value="${esc(nxt ?? '')}">
       <button class="btn btn-ghost sm" data-line="${esc(line)}" onclick="saveCommit(this)">Save</button>
@@ -514,9 +509,10 @@ function drawRangeBar(r) {
     data: {
       labels: s.map(x => x.LineName),
       datasets: [
-        { label: 'Plan', data: s.map(x => x.plan), backgroundColor: '#c7c4ff', borderRadius: 6 },
-        { label: 'Achieved', data: s.map(x => x.achieved), backgroundColor: '#635bff', borderRadius: 6 },
-        { label: 'Target', data: s.map(x => x.target), backgroundColor: '#e2e8f0', borderRadius: 6 }
+        { label: state.dash.mode === 'week' ? 'Weekly Target' : 'Plan',
+          data: s.map(x => state.dash.mode === 'week' ? (x.weeklyTarget || 0) : x.plan),
+          backgroundColor: '#c7c4ff', borderRadius: 6 },
+        { label: 'Achieved', data: s.map(x => x.achieved), backgroundColor: '#635bff', borderRadius: 6 }
       ]
     },
     options: {
