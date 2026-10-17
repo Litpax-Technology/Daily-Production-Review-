@@ -18,7 +18,7 @@ const state = {
 const NUM = ['YesterdayAchieved', 'Shifts', 'PlanYesterday', 'PlanToday'];
 
 /* ================= JSONP (timeout + resilience) ================= */
-const RETRY_SAFE = ['bootstrap', 'getDay', 'dashboard', 'dashboardRange', 'listHistory', 'saveDay', 'getCommits', 'saveCommit'];
+const RETRY_SAFE = ['bootstrap', 'getDay', 'dashboard', 'dashboardRange', 'listHistory', 'saveDay', 'getCommits', 'saveCommit', 'getWeekTargets', 'saveWeekTargets'];
 async function api(action, params = {}) {
   const tries = RETRY_SAFE.includes(action) ? 2 : 1;
   for (let i = 0; i < tries; i++) {
@@ -553,6 +553,7 @@ function drawChart(r, byLine) {
 /* ================= View: Settings ================= */
 function renderSettings() {
   const page = document.getElementById('page');
+  if (!state.wtDate) state.wtDate = weekStartStr(todayStr());
   page.innerHTML = `
     <div class="settings">
       <div class="sec">
@@ -571,6 +572,16 @@ function renderSettings() {
       </div>
 
       <div class="sec">
+        <div class="sec-head"><h3>Week-wise Target</h3>
+          <div class="wt-bar">
+            <input id="wtDate" class="input" type="date" value="${state.wtDate}">
+            <button id="wtSave" class="btn btn-primary" style="width:auto">Save targets</button>
+          </div></div>
+        <div class="muted wt-lbl" id="wtLbl"></div>
+        <div class="tblscroll" id="wtWrap"><div class="skeleton"></div></div>
+      </div>
+
+      <div class="sec">
         <div class="sec-head"><h3>Model Master</h3>
           <button class="btn btn-primary" style="width:auto" onclick="editModel()">+ Add model</button></div>
         <div class="tblscroll"><table class="tbl">
@@ -584,6 +595,54 @@ function renderSettings() {
         </table></div>
       </div>
     </div>`;
+
+  document.getElementById('wtDate').onchange = e => {
+    state.wtDate = weekStartStr(e.target.value);
+    e.target.value = state.wtDate;            // koi bhi din chuno → Monday pe aa jayega
+    loadWeekTargets();
+  };
+  document.getElementById('wtSave').onclick = saveWeekTargets;
+  loadWeekTargets();
+}
+
+async function loadWeekTargets() {
+  const wrap = document.getElementById('wtWrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="skeleton"></div>';
+  try {
+    const r = await api('getWeekTargets', { date: state.wtDate });
+    if (!r.ok) return toast(r.message || 'Load failed', false);
+    document.getElementById('wtLbl').textContent = 'Week: ' + r.weekStart + ' → ' + addDays(r.weekStart, 6);
+    wrap.innerHTML = `<table class="tbl">
+      <thead><tr><th>Line</th><th>Default</th><th>This week target</th><th></th></tr></thead>
+      <tbody>${r.rows.map(x => `<tr data-line="${esc(x.LineName)}">
+        <td>${esc(x.LineName)}</td>
+        <td class="muted">${x.DefaultTarget}</td>
+        <td><input class="cin wt-in" inputmode="numeric" value="${esc(x.WeeklyTarget)}"></td>
+        <td>${x.saved ? '<span class="wt-tag ok">Saved</span>' : '<span class="wt-tag">Default</span>'}</td>
+      </tr>`).join('') || `<tr><td colspan="4" class="empty">No lines yet.</td></tr>`}</tbody>
+    </table>`;
+  } catch (e) { wrap.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+}
+
+async function saveWeekTargets() {
+  const items = [...document.querySelectorAll('#wtWrap tr[data-line]')].map(tr => ({
+    LineName: tr.dataset.line,
+    WeeklyTarget: tr.querySelector('.wt-in').value.trim()
+  }));
+  if (!items.length) return;
+  const bad = items.find(i => i.WeeklyTarget === '' || isNaN(Number(i.WeeklyTarget)));
+  if (bad) return toast(bad.LineName + ': number daalo', false);
+  const btn = document.getElementById('wtSave');
+  btn.disabled = true;
+  try {
+    const r = await api('saveWeekTargets', {
+      date: state.wtDate, user: state.enteredBy || 'Admin', items: JSON.stringify(items)
+    });
+    toast(r.ok ? 'Week targets saved' : (r.message || 'Save failed'), r.ok);
+    if (r.ok) loadWeekTargets();
+  } catch (e) { toast(e.message, false); }
+  finally { btn.disabled = false; }
 }
 
 /* ---- Line editor ---- */
