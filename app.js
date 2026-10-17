@@ -416,6 +416,9 @@ function drawRangeDashboard(r, c) {
     const pct = s.plan ? Math.round(s.achieved / s.plan * 100) : 0;
     const pend = s.plan ? pct - 100 : 0;
     const vcls = s.variance > 0 ? 'up' : s.variance < 0 ? 'down' : '';
+    const tPctL = s.target ? Math.round(s.achieved / s.target * 100) : 0;
+    const wkPct = s.weeklyTarget ? Math.round(s.achieved / s.weeklyTarget * 100) : 0;
+    const isWeek = state.dash.mode === 'week';
     return `<div class="card fade-in">
       <div class="card-top"><span class="cname">${esc(s.LineName)}</span>
         <span class="badge">${s.days} day${s.days===1?'':'s'}</span></div>
@@ -427,6 +430,11 @@ function drawRangeDashboard(r, c) {
       <div class="prog"><div class="prog-bar" style="width:${Math.min(100,pct)}%"></div></div>
       <div class="prog-lbl muted">Achievement: ${pct}% &nbsp;|&nbsp;
         <span class="pend ${pend >= 0 ? 'up' : 'down'}">Pending: ${pend > 0 ? '+' : ''}${pend}%</span></div>
+      <div class="tgt-row muted">Target: <b>${s.target || '—'}</b> (${s.perDay} × ${s.days}d) &nbsp;|&nbsp;
+        vs target: <span class="${tPctL >= 100 ? 'up' : 'down'}">${s.target ? tPctL + '%' : '—'}</span></div>
+      ${isWeek && s.weeklyTarget ? `
+        <div class="prog prog-wk"><div class="prog-bar" style="width:${Math.min(100, wkPct)}%"></div></div>
+        <div class="prog-lbl muted">Week: ${s.achieved} / ${s.weeklyTarget} (${wkPct}%)</div>` : ''}
       ${commitHtml(s.LineName, c)}
     </div>`;
   }).join('');
@@ -507,7 +515,8 @@ function drawRangeBar(r) {
       labels: s.map(x => x.LineName),
       datasets: [
         { label: 'Plan', data: s.map(x => x.plan), backgroundColor: '#c7c4ff', borderRadius: 6 },
-        { label: 'Achieved', data: s.map(x => x.achieved), backgroundColor: '#635bff', borderRadius: 6 }
+        { label: 'Achieved', data: s.map(x => x.achieved), backgroundColor: '#635bff', borderRadius: 6 },
+        { label: 'Target', data: s.map(x => x.target), backgroundColor: '#e2e8f0', borderRadius: 6 }
       ]
     },
     options: {
