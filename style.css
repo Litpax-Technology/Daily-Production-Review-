@@ -238,6 +238,4 @@ body {
 .commit-row .muted{flex:1}
 .commit-in{width:64px;text-align:center}
 
-.tgt-row { font-size: 12px; margin-top: 6px; }
-.prog-wk { margin-top: 10px; height: 5px; }
-.prog-wk .prog-bar { background: #94a3b8; }
+
