@@ -58,6 +58,7 @@ function addDays(s, n) {
   const d = new Date(s + 'T00:00:00'); d.setDate(d.getDate() + n);
   return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 }
+function isOneWeek(from, to) { return !!from && !!to && weekStartStr(from) === weekStartStr(to); }
 
 function esc(v) { return (v == null ? '' : String(v)).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 function num(v) { return Number(v) || 0; }
@@ -346,7 +347,7 @@ async function renderDashboard() {
 /* mode -> compute from/to, then reload */
 function setDashMode(m) {
   const d = state.dash; d.mode = m;
-  if (m === 'week')  { d.from = weekStartStr(state.date); d.to = state.date; }
+  if (m === 'week')  { const pd = addDays(state.date, -1); d.from = weekStartStr(pd); d.to = pd; }
   if (m === 'month') { d.from = monthStartStr(state.date); d.to = state.date; }
   renderDashboard();
 }
@@ -410,7 +411,7 @@ function drawDashboard(r) {
 
 /* ================= Range Dashboard (week / month / custom) ================= */
 function drawRangeDashboard(r, c) {
-  const isWeek = state.dash.mode === 'week';
+  const isWeek = isOneWeek(r.from, r.to);
   let tA = 0, tP = 0;
   const cards = (r.summary || []).map(s => {
     const plan = isWeek ? (s.weeklyTarget || 0) : s.plan;
@@ -512,8 +513,8 @@ function drawRangeBar(r) {
     data: {
       labels: s.map(x => x.LineName),
       datasets: [
-        { label: state.dash.mode === 'week' ? 'Weekly Target' : 'Plan',
-          data: s.map(x => state.dash.mode === 'week' ? (x.weeklyTarget || 0) : x.plan),
+        { label: isOneWeek(r.from, r.to) ? 'Weekly Target' : 'Plan',
+          data: s.map(x => isOneWeek(r.from, r.to) ? (x.weeklyTarget || 0) : x.plan),
           backgroundColor: '#c7c4ff', borderRadius: 6 },
         { label: 'Achieved', data: s.map(x => x.achieved), backgroundColor: '#635bff', borderRadius: 6 }
       ]
