@@ -1,6 +1,6 @@
 const CONFIG = {
   // Paste your Apps Script Web App /exec URL here after deploying
-  API_URL: 'https://script.google.com/macros/s/AKfycbwo1mxLBPu0rfyxVvv0MTIbIj4b8HbPQ3HVl_FQ_3AEhlH8XCIxPdPmWiN9ou7yE-QXBg/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycbycsX4hUWbZPZzMnmgmsavHHTi77qOxurv5YxVxB8IAmM_7ZilFwKrSYunqr4I88he4mg/exec',
   APP_NAME: 'Daily Production Review',
   PAGE_SIZE: 50
 };
