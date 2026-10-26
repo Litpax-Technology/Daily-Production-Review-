@@ -216,20 +216,20 @@ body {
   .nav-item.active::before { display: none; }
   .side-foot { display: none; }
   .content { padding: 16px; }
-
+  .bar { gap: 11px; }
+  .cin { width: 58px; } .cin.wide { width: 124px; }
+  .seg { width: 100%; overflow-x: auto; }
+}
 
 /* ---- Dashboard segmented control ---- */
 .seg { display: inline-flex; background: #f1f2f8; border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm); padding: 3px; gap: 2px; }
 .seg-btn { padding: 8px 14px; border: none; background: transparent; color: var(--muted);
-  font-size: 13px; font-weight: 600; border-radius: 7px; cursor: pointer;
+  font-size: 13px; font-weight: 600; border-radius: 7px; cursor: pointer; white-space: nowrap;
   transition: background .2s var(--ease), color .2s var(--ease); }
 .seg-btn:hover { color: var(--text); }
 .seg-btn.active { background: #fff; color: var(--accent-dark); box-shadow: var(--shadow-sm); }
 .range-lbl { font-size: 13px; margin-bottom: 14px; font-weight: 600; }
-  .bar { gap: 11px; }
-  .cin { width: 58px; } .cin.wide { width: 124px; }
-}
 
 .pend.up{color:#16a34a;font-weight:600}
 .pend.down{color:#dc2626;font-weight:600}
