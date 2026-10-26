@@ -361,7 +361,8 @@ async function loadDash() {
       if (!r.ok) return toast(r.message || 'Load failed', false);
       drawDashboard(r);
     } else {
-      const r = await api('dashboardRange', { from: state.dash.from, to: state.dash.to });
+        const r = await api('dashboardRange', { from: state.dash.from, to: state.dash.to,
+        basis: state.dash.mode === 'custom' ? 'entry' : '' });
       if (!r.ok) return toast(r.message || 'Load failed', false);
       let c = null;
       if (state.dash.mode === 'week') {
