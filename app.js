@@ -446,7 +446,8 @@ function drawRangeDashboard(r, c) {
       <div class="kpi ${tVar>0?'up':tVar<0?'down':''}"><b>${tP?(tVar>0?'+':'')+tVar:'—'}</b><span>Total variance</span></div>
       <div class="kpi"><b>${tPct}%</b><span>Achievement</span></div>
     </div>
-    <div class="range-lbl muted">${esc(r.from)} → ${esc(r.to)}</div>
+    <div class="range-lbl muted">Production: ${esc(r.from)} → ${esc(r.to)} &nbsp;·&nbsp;
+      Entries: ${esc(addDays(r.from, 1))} → ${esc(addDays(r.to, 1))}</div>
     <div class="chart-card"><canvas id="chartTrend" height="110"></canvas></div>
     <div class="chart-card"><canvas id="chart" height="110"></canvas></div>
     <div class="cards">${cards || `<div class="empty">No data in this range.</div>`}</div>`;
